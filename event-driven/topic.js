@@ -25,7 +25,7 @@ const run = async () => {
     });
     console.info("topico criado.");
     await admin.disconnect();
-    console.info('disconectado ...');
+    console.info('desconectado ...');
   } catch (error) {
     console.error(`Mensagem de erro:: ${error}`);
   }
