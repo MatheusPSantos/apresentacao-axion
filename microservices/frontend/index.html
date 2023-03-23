@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Produtos</title>
+</head>
+
+<body>
+  <h1>Produtos</h1>
+
+  <form>
+    <ul>
+      <li>
+        <input type="checkbox" id="produto1" name="produto" value="Produto 1">
+        <label for="produto1">Produto 1 - R$ 19,99 - Descrição do Produto 1</label>
+      </li>
+      <li>
+        <input type="checkbox" id="produto2" name="produto" value="Produto 2">
+        <label for="produto2">Produto 2 - R$ 29,99 - Descrição do Produto 2</label>
+      </li>
+      <li>
+        <input type="checkbox" id="produto3" name="produto" value="Produto 3">
+        <label for="produto3">Produto 3 - R$ 39,99 - Descrição do Produto 3</label>
+      </li>
+      <li>
+        <input type="checkbox" id="produto4" name="produto" value="Produto 4">
+        <label for="produto4">Produto 4 - R$ 49,99 - Descrição do Produto 4</label>
+      </li>
+      <li>
+        <input type="checkbox" id="produto5" name="produto" value="Produto 5">
+        <label for="produto5">Produto 5 - R$ 59,99 - Descrição do Produto 5</label>
+      </li>
+    </ul>
+
+    <input type="submit" value="Adicionar à lista de desejos">
+  </form>
+
+
+  <h2>Lista de desejos</h2>
+  <ul id="lista-de-desejos"></ul>
+
+  <h2>Calcular frete</h2>
+  <form id="cepForm">
+    <p>Informe um CEP para o calculo do frete.</p>
+    <input type="text" id="cepInput" placeholder="XXXXX-XXX" />
+    <input type="submit" value="Calcular Frete" />
+  </form>
+  <p>Valor do Frete: R$<span id="valorFrete"></span></p>
+  <h2>
+    Valor total: R$ <span id="valorTotal"></span>
+  </h2>
+  <h2>Valor a pagar: R$ <span id="valorPagar"></span></h2>
+
+  <h1 style="margin:auto;" id="statusPagamento"></h1>
+
+  <button onclick="fazerPagamento()">PAGAR 💲</button>
+  <script>
+    let valorTotal = 0;
+    let valorFrete = 0;
+    let valorAPagar = valorFrete + valorTotal;
+
+    const CARRINHO_SERVICE_URL = "http://localhost:3333";
+    const FRETE_SERVICE_URL = "http://localhost:3003/frete";
+    const PAGAMENTO_SERVICE_URL = "http://localhost:3002/pagar";
+
+    const form = document.querySelector('form');
+    const listaDeDesejos = document.querySelector('#lista-de-desejos');
+    const listaDeDesejosDetalhada = [];
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const produtosSelecionados = document.querySelectorAll('input[name="produto"]:checked');
+
+      produtosSelecionados.forEach(produto => {
+        const idDoProduto = produto.id;
+        // chamar microservice de consultar-preco
+        fetch(`${CARRINHO_SERVICE_URL}/adicionar-item/${idDoProduto}`,
+          {
+            method: 'POST',
+          })
+          .then(resposta => {
+            if (resposta.status === 200) {
+              return resposta.json();
+            }
+          })
+          .then(data => {
+            listaDeDesejosDetalhada.push(data); // {"ID":"produto2","Nome":"Produto 2","Preco":29.99}
+            atualizarValor(data.Preco);
+            atualizarValorPagar();
+            const li = document.createElement('li');
+            li.textContent = produto.value;
+            listaDeDesejos.appendChild(li);
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      });
+    });
+
+    const formCep = document.querySelector("#cepForm");
+    formCep.addEventListener('submit', event => {
+      event.preventDefault();
+      fetch(FRETE_SERVICE_URL, { method: 'GET' })
+        .then(response => response.json())
+        .then(data => {
+          valorFrete = Math.ceil(data.frete);
+          document.querySelector("#valorFrete").textContent = valorFrete;
+          atualizarValorPagar();
+        })
+        .catch(error => console.error);
+    });
+
+    function atualizarValor(valor) {
+      valorTotal += valor;
+      document.querySelector("#valorTotal").textContent = valorTotal;
+    }
+
+    function atualizarValorPagar() {
+      valorAPagar = valorTotal + valorFrete;
+      document.querySelector("#valorPagar").textContent = valorAPagar;
+    }
+
+    function fazerPagamento() {
+      fetch(PAGAMENTO_SERVICE_URL, {
+        method: 'POST'
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status == "OK") {
+            document.querySelector("#statusPagamento").textContent = "Pagamento realizado!";
+          }
+        });
+    }
+  </script>
+</body>
+
+</html>
