@@ -7,7 +7,7 @@ const run = async () => {
       clientId: "aplicacao",
       ssl: false,
       brokers: [
-        'localhost:9092'
+        'localhost:9092',
       ],
     });
 

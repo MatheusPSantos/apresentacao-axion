@@ -23,6 +23,7 @@ const run = async () => {
 
   await consumer.run({
     eachMessage: async result => {
+
       console.info(`
       {
         topic: ${result.topic},
